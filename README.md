@@ -45,14 +45,15 @@ Your post, in Markdown.
 
 ## Deploy to Cloudflare
 
-1. Push this folder to a GitHub repository.
-2. In the Cloudflare dashboard, go to **Workers & Pages**, create a new project, and connect the repository.
-3. Settings:
-   - Framework preset: **Astro**
+The site deploys as a Cloudflare Worker with static assets. `wrangler.jsonc` tells Cloudflare to serve the built `dist/` folder.
+
+1. Push this repository to GitHub.
+2. In the Cloudflare dashboard, go to **Workers & Pages**, choose **Create application**, and import the repository.
+3. Use these settings (the defaults are correct):
    - Build command: `npm run build`
-   - Build output directory: `dist`
-   - Environment variable: `NODE_VERSION` = `22`
-4. After the first deploy, open the project's **Custom domains** tab and add `thehappyhiatus.com` (and `www`). Because the domain is already on Cloudflare, DNS is set up for you.
+   - Deploy command: `npx wrangler deploy`
+   - No output directory is needed; `wrangler.jsonc` sets it.
+4. After the first deploy, open the Worker's **Settings → Domains & Routes** and add `thehappyhiatus.com` (and `www`). Because the domain is already on Cloudflare, DNS is set up for you.
 5. Every push to `main` redeploys the site.
 
 ## Newsletter
