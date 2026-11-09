@@ -1,0 +1,157 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import { getCategory } from '../../data/categories';
+import { getPosts, formatDate, readingTime } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const category = getCategory(post.data.category)!;
+const minutes = readingTime(post.body);
+const more = (await getPosts()).filter((p) => p.id !== post.id).slice(0, 3);
+---
+
+<Base title={post.data.title} description={post.data.description}>
+  <div class="wrap crumbs">
+    <a href="/">Home</a><span aria-hidden="true">/</span><a href={`/${category.slug}`}>{category.name}</a><span
+      aria-hidden="true">/</span
+    ><span>{post.data.moment ?? post.data.title}</span>
+  </div>
+
+  <header class="wrap head">
+    <a class="label" href={`/${category.slug}`}>
+      {category.name}{post.data.moment ? ` · ${post.data.moment}` : ''}
+    </a>
+    <h1>{post.data.title}</h1>
+    <p class="dek">{post.data.description}</p>
+    <div class="meta">
+      <span>{post.data.author}</span>
+      <span>{formatDate(post.data.pubDate)}</span>
+      <span>{minutes} min read</span>
+    </div>
+  </header>
+
+  <article class="wrap prose">
+    <Content />
+  </article>
+
+  {
+    more.length > 0 && (
+      <section class="more">
+        <div class="wrap inner">
+          <h2>More to read</h2>
+          <div class="grid">
+            {more.map((p) => (
+              <PostCard post={p} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <div class="wrap">
+    <Newsletter />
+  </div>
+</Base>
+
+<style>
+  .crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 var(--gutter) 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fern);
+  }
+  .crumbs span:last-child {
+    color: var(--ink);
+  }
+  .head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 22px;
+    padding: 40px var(--gutter) 56px;
+  }
+  h1 {
+    font-size: clamp(40px, 6vw, 72px);
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    max-width: 860px;
+  }
+  .dek {
+    margin: 0;
+    font-size: 21px;
+    max-width: 620px;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .prose {
+    max-width: 760px;
+    padding: 0 var(--gutter) 72px;
+    font-size: 19px;
+    line-height: 1.75;
+  }
+  .prose :global(p) {
+    margin: 0 0 28px;
+  }
+  .prose :global(h2) {
+    font-size: 34px;
+    line-height: 1.2;
+    margin: 48px 0 20px;
+  }
+  .prose :global(h3) {
+    font-size: 26px;
+    margin: 36px 0 16px;
+  }
+  .prose :global(blockquote) {
+    margin: 36px 0;
+    padding: 8px 0 8px 28px;
+    border-left: 3px solid var(--clay);
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 28px;
+    line-height: 1.35;
+  }
+  .prose :global(blockquote p) {
+    margin: 0;
+  }
+  .prose :global(a) {
+    color: var(--clay);
+    text-decoration: underline;
+  }
+  .more {
+    background: var(--linen);
+    padding: 72px 0;
+  }
+  .inner {
+    padding: 0 var(--gutter);
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .inner h2 {
+    font-size: 40px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+</style>

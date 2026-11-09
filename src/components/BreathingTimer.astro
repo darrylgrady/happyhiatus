@@ -1,0 +1,243 @@
+---
+// A self-contained breathing timer. All behavior lives in the script below.
+---
+
+<section class="timer" data-timer>
+  <div class="patterns" role="group" aria-label="Breathing rhythm">
+    <button type="button" class="pat" data-pattern="calm" aria-pressed="true">Calm</button>
+    <button type="button" class="pat" data-pattern="box" aria-pressed="false">Box</button>
+    <button type="button" class="pat" data-pattern="relax" aria-pressed="false">4-7-8</button>
+  </div>
+
+  <div class="stage">
+    <div class="ring" aria-hidden="true"></div>
+    <div class="orb" data-orb aria-hidden="true"></div>
+    <div class="readout">
+      <div class="phase" data-label aria-live="polite">Ready</div>
+      <div class="count" data-count>Start</div>
+    </div>
+  </div>
+
+  <p class="desc" data-desc></p>
+
+  <div class="controls">
+    <button type="button" class="go" data-toggle>Start</button>
+    <span class="rounds">Rounds completed: <span data-rounds>0</span></span>
+  </div>
+</section>
+
+<style>
+  .timer {
+    background: var(--moss);
+    color: var(--oat);
+    border-radius: var(--radius-card);
+    padding: 56px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 36px;
+  }
+  .patterns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .pat {
+    min-height: 44px;
+    padding: 0 24px;
+    border-radius: 999px;
+    font: 600 15px var(--font-body);
+    cursor: pointer;
+    background: transparent;
+    color: var(--oat);
+    border: 1.5px solid rgba(244, 238, 227, 0.55);
+  }
+  .pat[aria-pressed='true'] {
+    background: var(--blush);
+    color: var(--ink);
+    border-color: var(--blush);
+  }
+  .stage {
+    position: relative;
+    width: 340px;
+    max-width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ring {
+    position: absolute;
+    inset: 0;
+    border: 1.5px solid rgba(244, 238, 227, 0.35);
+    border-radius: 50%;
+  }
+  .orb {
+    position: absolute;
+    width: 94%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--blush);
+    transform: scale(0.6);
+    transition: transform 0.8s ease-in-out;
+  }
+  .readout {
+    position: relative;
+    color: var(--ink);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .phase {
+    font-family: var(--font-display);
+    font-size: 24px;
+    line-height: 1.1;
+  }
+  .count {
+    font-family: var(--font-display);
+    font-size: 52px;
+    line-height: 1;
+  }
+  .desc {
+    margin: 0;
+    max-width: 420px;
+    text-align: center;
+    min-height: 48px;
+  }
+  .controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .go {
+    min-width: 180px;
+    min-height: 52px;
+    background: var(--blush);
+    color: var(--ink);
+    border: 0;
+    border-radius: var(--radius-button);
+    font: 600 17px var(--font-body);
+    cursor: pointer;
+  }
+  .rounds {
+    font-size: 14px;
+    color: var(--blush);
+  }
+  .timer :global(:focus-visible) {
+    outline-color: var(--blush);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .orb {
+      transition: none !important;
+    }
+  }
+</style>
+
+<script>
+  type Phase = { label: string; secs: number; scale: number };
+  type Pattern = { desc: string; phases: Phase[] };
+
+  const PATTERNS: Record<string, Pattern> = {
+    calm: {
+      desc: 'Breathe in for 4, out for 6. A gentle way to settle.',
+      phases: [
+        { label: 'Breathe in', secs: 4, scale: 1 },
+        { label: 'Breathe out', secs: 6, scale: 0.6 },
+      ],
+    },
+    box: {
+      desc: 'In for 4, hold for 4, out for 4, hold for 4. Steady and even.',
+      phases: [
+        { label: 'Breathe in', secs: 4, scale: 1 },
+        { label: 'Hold', secs: 4, scale: 1 },
+        { label: 'Breathe out', secs: 4, scale: 0.6 },
+        { label: 'Hold', secs: 4, scale: 0.6 },
+      ],
+    },
+    relax: {
+      desc: 'In for 4, hold for 7, out for 8. A slower rhythm for winding down.',
+      phases: [
+        { label: 'Breathe in', secs: 4, scale: 1 },
+        { label: 'Hold', secs: 7, scale: 1 },
+        { label: 'Breathe out', secs: 8, scale: 0.6 },
+      ],
+    },
+  };
+
+  const root = document.querySelector<HTMLElement>('[data-timer]');
+
+  if (root) {
+    const orb = root.querySelector<HTMLElement>('[data-orb]')!;
+    const label = root.querySelector<HTMLElement>('[data-label]')!;
+    const count = root.querySelector<HTMLElement>('[data-count]')!;
+    const desc = root.querySelector<HTMLElement>('[data-desc]')!;
+    const toggle = root.querySelector<HTMLButtonElement>('[data-toggle]')!;
+    const roundsEl = root.querySelector<HTMLElement>('[data-rounds]')!;
+    const chips = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-pattern]'));
+
+    let key = 'calm';
+    let running = false;
+    let idx = 0;
+    let remaining = 0;
+    let rounds = 0;
+    let timer: number | undefined;
+
+    function render() {
+      const pattern = PATTERNS[key];
+      const phase = running ? pattern.phases[idx] : null;
+      orb.style.transitionDuration = `${phase ? phase.secs : 0.8}s`;
+      orb.style.transform = `scale(${phase ? phase.scale : 0.6})`;
+      label.textContent = phase ? phase.label : 'Ready';
+      count.textContent = phase ? String(remaining) : 'Start';
+      toggle.textContent = running ? 'Stop' : 'Start';
+      roundsEl.textContent = String(rounds);
+      desc.textContent = pattern.desc;
+      chips.forEach((chip) => chip.setAttribute('aria-pressed', String(chip.dataset.pattern === key)));
+    }
+
+    function stop() {
+      window.clearInterval(timer);
+      running = false;
+      idx = 0;
+      remaining = 0;
+    }
+
+    function tick() {
+      const pattern = PATTERNS[key];
+      remaining -= 1;
+      if (remaining <= 0) {
+        idx = (idx + 1) % pattern.phases.length;
+        if (idx === 0) rounds += 1;
+        remaining = pattern.phases[idx].secs;
+      }
+      render();
+    }
+
+    toggle.addEventListener('click', () => {
+      if (running) {
+        stop();
+      } else {
+        running = true;
+        idx = 0;
+        rounds = 0;
+        remaining = PATTERNS[key].phases[0].secs;
+        timer = window.setInterval(tick, 1000);
+      }
+      render();
+    });
+
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        stop();
+        key = chip.dataset.pattern ?? 'calm';
+        rounds = 0;
+        render();
+      });
+    });
+
+    render();
+  }
+</script>

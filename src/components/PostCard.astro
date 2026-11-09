@@ -1,0 +1,45 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getCategory } from '../data/categories';
+import { readingTime } from '../lib/posts';
+
+interface Props {
+  post: CollectionEntry<'journal'>;
+}
+
+const { post } = Astro.props;
+const category = getCategory(post.data.category);
+const minutes = readingTime(post.body);
+---
+
+<a class="card" href={`/journal/${post.id}`}>
+  <div class="img" style={`background:${category?.bg ?? '#D3C4A6'}`}></div>
+  <span class="label">{post.data.moment ?? category?.name}</span>
+  <h3>{post.data.title}</h3>
+  <span class="meta">{minutes} min read</span>
+</a>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .card:hover {
+    text-decoration: none;
+  }
+  .card:hover h3 {
+    text-decoration: underline;
+  }
+  .img {
+    height: 220px;
+    border-radius: var(--radius-card);
+  }
+  h3 {
+    font-size: 27px;
+    line-height: 1.2;
+  }
+  .meta {
+    font-size: 14px;
+  }
+</style>

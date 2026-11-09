@@ -1,0 +1,72 @@
+---
+import Base from '../../layouts/Base.astro';
+import { tools } from '../../data/tools';
+import { getCategory } from '../../data/categories';
+---
+
+<Base title="Tools" description="Small tools for slowing down.">
+  <div class="wrap">
+    <header class="head">
+      <span class="eyebrow">Tools</span>
+      <h1>Little helpers for the pause</h1>
+    </header>
+    <section class="grid">
+      {
+        tools.map((t) => {
+          const cat = getCategory(t.category);
+          const live = t.status === 'live';
+          return (
+            <div class="tool" style={`background:${cat?.bg}`}>
+              <span class="label">{live ? cat?.name : `${cat?.name} · Coming soon`}</span>
+              <h2>{t.name}</h2>
+              <p>{t.blurb}</p>
+              {live && (
+                <a class="btn" href={`/tools/${t.slug}`}>
+                  Open
+                </a>
+              )}
+            </div>
+          );
+        })
+      }
+    </section>
+  </div>
+</Base>
+
+<style>
+  .head {
+    padding: 40px var(--gutter) 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  h1 {
+    font-size: clamp(44px, 7vw, 80px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    max-width: 800px;
+  }
+  .grid {
+    padding: 0 var(--gutter) 96px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .tool {
+    padding: 32px;
+    border-radius: var(--radius-card);
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    color: var(--ink);
+  }
+  .tool h2 {
+    font-size: 34px;
+    line-height: 1.1;
+  }
+  .tool p {
+    margin: 0 0 auto;
+  }
+</style>

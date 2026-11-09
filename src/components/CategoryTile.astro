@@ -1,0 +1,66 @@
+---
+import type { Category } from '../data/categories';
+
+interface Props {
+  category: Category;
+}
+
+const { category } = Astro.props;
+---
+
+<a
+  class:list={['tile', { dark: category.dark }]}
+  href={`/${category.slug}`}
+  style={`background:${category.bg}`}
+>
+  <div class="top">
+    <span class="num">{category.number}</span>
+    <h3>{category.name}</h3>
+  </div>
+  <ul>
+    {category.items.map((item) => <li>{item}</li>)}
+  </ul>
+</a>
+
+<style>
+  .tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 28px;
+    min-height: 300px;
+    padding: 28px;
+    border-radius: var(--radius-card);
+    color: var(--ink);
+  }
+  .tile:hover {
+    text-decoration: none;
+    filter: brightness(0.97);
+  }
+  .tile.dark {
+    color: var(--oat);
+  }
+  .num {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 18px;
+  }
+  h3 {
+    font-size: 46px;
+    line-height: 1;
+    margin-top: 8px;
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+  }
+  li {
+    padding: 9px 0;
+    border-top: 1px solid rgba(43, 42, 36, 0.25);
+  }
+  .dark li {
+    border-top-color: rgba(244, 238, 227, 0.3);
+  }
+</style>

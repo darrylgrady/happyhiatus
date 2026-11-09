@@ -1,0 +1,159 @@
+---
+import Base from '../layouts/Base.astro';
+import { books } from '../data/books';
+import { categories, getCategory } from '../data/categories';
+---
+
+<Base title="Bookshelf" description="Books that made me slow down, look up, or start something new.">
+  <div class="wrap">
+    <header class="head">
+      <div class="titles">
+        <span class="eyebrow">Recommended reading</span>
+        <h1>Bookshelf</h1>
+      </div>
+      <p>
+        Books that made me slow down, look up, or start something new. Each one comes with a few words on why I loved it.
+      </p>
+    </header>
+
+    <div class="filters" role="group" aria-label="Filter by category">
+      <button type="button" class="chip" data-filter="all" aria-pressed="true">All</button>
+      {
+        categories.map((c) => (
+          <button type="button" class="chip" data-filter={c.slug} aria-pressed="false">
+            {c.name}
+          </button>
+        ))
+      }
+    </div>
+
+    <section class="grid">
+      {
+        books.map((b) => {
+          const cat = getCategory(b.category);
+          return (
+            <article class="book" data-category={b.category}>
+              <div class={`cover${b.darkCover ? ' dark' : ''}`} style={`background:${b.cover}`}>
+                <span>{cat?.name}</span>
+              </div>
+              <span class="label">{cat?.name}</span>
+              <h2>{b.title}</h2>
+              <span class="by">{b.author}</span>
+              <p>{b.note}</p>
+              {b.url && (
+                <a class="buy" href={b.url} rel="sponsored noopener" target="_blank">
+                  View on Bookshop.org
+                </a>
+              )}
+            </article>
+          );
+        })
+      }
+    </section>
+
+    <p class="disclosure">
+      Some links here are affiliate links. If you buy through them, Happy Hiatus may earn a small commission at no extra
+      cost to you.
+    </p>
+  </div>
+</Base>
+
+<style>
+  .head {
+    padding: 40px var(--gutter) 48px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px 56px;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .titles {
+    flex: 1 1 440px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  h1 {
+    font-size: clamp(56px, 9vw, 96px);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .head p {
+    flex: 1 1 320px;
+    max-width: 440px;
+    margin: 0;
+    font-size: 19px;
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 var(--gutter) 40px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(43, 42, 36, 0.35);
+  }
+  .grid {
+    padding: 0 var(--gutter);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 48px 28px;
+  }
+  .book {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .book[hidden] {
+    display: none;
+  }
+  .cover {
+    height: 340px;
+    border-radius: 3px 8px 8px 3px;
+    box-shadow: inset 10px 0 0 rgba(43, 42, 36, 0.25);
+    display: flex;
+    align-items: flex-end;
+    padding: 20px 22px 20px 30px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 18px;
+  }
+  .cover.dark {
+    color: var(--oat);
+  }
+  h2 {
+    font-size: 25px;
+    line-height: 1.2;
+  }
+  .by {
+    font-size: 14px;
+  }
+  .book p {
+    margin: 0;
+    font-size: 15px;
+  }
+  .buy {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--clay);
+  }
+  .disclosure {
+    margin: 48px var(--gutter) 96px;
+    font-size: 14px;
+    max-width: 640px;
+  }
+</style>
+
+<script>
+  const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-filter]'));
+  const books = Array.from(document.querySelectorAll<HTMLElement>('[data-category]'));
+
+  chips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const filter = chip.dataset.filter ?? 'all';
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+      books.forEach((book) => {
+        book.hidden = filter !== 'all' && book.dataset.category !== filter;
+      });
+    });
+  });
+</script>

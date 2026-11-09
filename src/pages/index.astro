@@ -1,0 +1,155 @@
+---
+import Base from '../layouts/Base.astro';
+import CategoryTile from '../components/CategoryTile.astro';
+import PostCard from '../components/PostCard.astro';
+import Newsletter from '../components/Newsletter.astro';
+import { categories } from '../data/categories';
+import { getPosts } from '../lib/posts';
+
+const latest = (await getPosts()).slice(0, 3);
+---
+
+<Base>
+  <div class="wrap">
+    <section class="hero">
+      <div class="copy">
+        <span class="eyebrow">A place to pause</span>
+        <h1>Take the <em>break</em> you've been putting off.</h1>
+        <p>Small moments, slow days, and the things that make life feel good, gathered in one place.</p>
+        <div class="actions">
+          <a class="btn" href="#categories">Start exploring</a>
+          <a class="btn outline" href="#newsletter">Join the newsletter</a>
+        </div>
+      </div>
+      <div class="art">
+        <svg viewBox="0 0 520 480" role="img" aria-label="Illustration of a sun over rolling hills and water">
+          <rect width="520" height="480" fill="#E4D8C3"></rect>
+          <circle cx="360" cy="150" r="70" fill="#B5683F"></circle>
+          <path d="M0 300 Q130 190 270 275 T520 240 V480 H0Z" fill="#8A9A72"></path>
+          <path d="M0 360 Q160 270 300 350 T520 330 V480 H0Z" fill="#4B5A3C"></path>
+          <path d="M0 420 Q130 390 260 420 T520 410 V480 H0Z" fill="#2F3A2A"></path>
+          <path d="M60 455 Q90 445 120 455 T180 455" fill="none" stroke="#E4D8C3" stroke-width="3" stroke-linecap="round"></path>
+          <path d="M300 450 Q330 440 360 450 T420 450" fill="none" stroke="#E4D8C3" stroke-width="3" stroke-linecap="round"></path>
+        </svg>
+      </div>
+    </section>
+
+    <section class="cats" id="categories">
+      <div class="head">
+        <h2>Seven ways to slow down</h2>
+        <p>Pick a doorway. Every post, tool, and book lives in one of these.</p>
+      </div>
+      <div class="grid">
+        {categories.map((c) => <CategoryTile category={c} />)}
+      </div>
+    </section>
+  </div>
+
+  {
+    latest.length > 0 && (
+      <section class="journal">
+        <div class="wrap inner">
+          <h2>From the journal</h2>
+          <div class="posts">
+            {latest.map((post) => (
+              <PostCard post={post} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <div class="wrap">
+    <Newsletter />
+  </div>
+</Base>
+
+<style>
+  .hero {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 48px;
+    align-items: center;
+    padding: 40px var(--gutter) 88px;
+  }
+  .copy {
+    flex: 1 1 440px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  h1 {
+    font-size: clamp(46px, 7vw, 76px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+  }
+  h1 em {
+    color: var(--clay);
+  }
+  .copy p {
+    margin: 0;
+    font-size: 20px;
+    max-width: 470px;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .art {
+    flex: 1 1 380px;
+    max-width: 520px;
+  }
+  .art svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-card);
+  }
+  .cats {
+    padding: 24px var(--gutter) 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .head h2 {
+    font-size: clamp(36px, 5vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+  .head p {
+    margin: 0;
+    max-width: 340px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  .journal {
+    background: var(--linen);
+    padding: 80px 0;
+  }
+  .inner {
+    padding: 0 var(--gutter);
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+  .inner h2 {
+    font-size: 40px;
+  }
+  .posts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+</style>
